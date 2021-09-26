@@ -2,16 +2,18 @@ import os
 import pprint
 
 import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+
 load_dotenv()
 
 baseUrl = os.environ.get('baseUrl')
 username = os.environ.get('username')
 password = os.environ.get('password')
-employeeId = os.environ.get('employeeId')
-timesheetId = os.environ.get('timesheetId')
 projectName = os.environ.get('projectName')
 projectActivityName = os.environ.get('projectActivityName')
+employeeId = os.environ.get('employeeId')
+timesheetId = os.environ.get('timesheetId')
 
 validate_creds_url = f'{baseUrl}/auth/validateCredentials'
 
@@ -24,8 +26,12 @@ auth_cookies = auth_res.history[0].cookies
 view_my_timesheet_res = requests.get(f'{baseUrl}/time/viewMyTimesheet',
                                      cookies=auth_cookies)
 
-csrf_token = ''
-# GET CSRF TOKEN
+soup = BeautifulSoup(view_my_timesheet_res.text, 'html.parser')
+
+csrf_token_element = soup.find(id='time__csrf_token')
+
+csrf_token = csrf_token_element['value']
+
 form_data = {
     '_csrf_token': f'{csrf_token}',
     'initialRows[0][projectName]': f'{projectName}',
@@ -49,8 +55,19 @@ form_data = {
     'btnSave': 'Save'
 }
 
-save_timesheet_post_res = requests.post(f'{baseUrl}/time/editTimesheet?'
-                                        f'employeeId={employeeId}&timesheetId={timesheetId}&actionName=viewMyTimesheet',
-                                        data=form_data, cookies=auth_cookies)
+pprint.pprint(form_data)
 
-pprint.pprint(view_my_timesheet_res.text)
+# save_timesheet_post_res = requests.post(f'{baseUrl}/time/editTimesheet?'
+#                                         f'employeeId={employeeId}&timesheetId={timesheetId}&actionName=viewMyTimesheet',
+#                                         data=form_data, cookies=auth_cookies)
+#
+# pprint.pprint(view_my_timesheet_res.text)
+# todo GET TIMESHEET START DATE
+# timesheet_start_date = ''
+#
+# submit_timesheet_post_res = requests.post(f'{baseUrl}/time/viewMyTimesheet?'
+#                                           f'act=1&'
+#                                           f'timesheetStartDate={timesheet_start_date}&'
+#                                           f'employeeId={employeeId}&'
+#                                           f'submitted=true&'
+#                                           f'updateActionLog=true')
